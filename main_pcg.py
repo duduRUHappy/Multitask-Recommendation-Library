@@ -13,6 +13,8 @@ from models.mmoe import MMoEModel
 from models.ple import PLEModel
 from models.aitm import AITMModel
 from models.metaheac import MetaHeacModel
+from optimizer.pcgrad import PCGrad
+
 
 
 def get_dataset(name, path):
@@ -75,18 +77,20 @@ def train(model, optimizer, data_loader, criterion, device, log_interval=100):
     total_loss = 0
     loader = tqdm.tqdm(data_loader, smoothing=0, mininterval=1.0)
     for i, (categorical_fields, numerical_fields, labels) in enumerate(loader):
+        # 清楚torch梯度
+        optimizer.zero_grad()
         categorical_fields, numerical_fields, labels = categorical_fields.to(device), numerical_fields.to(device), labels.to(device)
-        print('categorical_fields:' +str(categorical_fields))
-        print('numerical_fields:' +str(numerical_fields))
         y = model(categorical_fields, numerical_fields)
         loss_list = [criterion(y[i], labels[:, i].float()) for i in range(labels.size(1))]
         loss = 0
         for item in loss_list:
             loss += item
         loss /= len(loss_list)
-        model.zero_grad()
-        loss.backward()
+        optimizer.pc_backward(loss_list)
+        # model.zero_grad()
+        # loss.backward()
         optimizer.step()
+
         total_loss += loss.item()
         if (i + 1) % log_interval == 0:
             loader.set_postfix(loss=total_loss / log_interval)
@@ -164,6 +168,7 @@ def main(dataset_name,
     model = get_model(model_name, field_dims, numerical_num, task_num, expert_num, embed_dim).to(device)
     criterion = torch.nn.BCELoss()
     optimizer = torch.optim.Adam(params=model.parameters(), lr=learning_rate, weight_decay=weight_decay)
+    optimizer = PCGrad(optimizer)
     
     file_name = f'{dataset_name}_{model_name}.pt'
     save_path = os.path.join(save_dir, file_name)
