@@ -76,8 +76,10 @@ def train(model, optimizer, data_loader, criterion, device, log_interval=100):
     loader = tqdm.tqdm(data_loader, smoothing=0, mininterval=1.0)
     for i, (categorical_fields, numerical_fields, labels) in enumerate(loader):
         categorical_fields, numerical_fields, labels = categorical_fields.to(device), numerical_fields.to(device), labels.to(device)
-        print('categorical_fields:' +str(categorical_fields))
-        print('numerical_fields:' +str(numerical_fields))
+        print('categorical_fields:')
+        print(categorical_fields.shape)
+        print('numerical_fields:')
+        print(numerical_fields.shape)
         y = model(categorical_fields, numerical_fields)
         loss_list = [criterion(y[i], labels[:, i].float()) for i in range(labels.size(1))]
         loss = 0
@@ -162,6 +164,7 @@ def main(dataset_name,
     field_dims = train_dataset.field_dims
     numerical_num = train_dataset.numerical_num
     model = get_model(model_name, field_dims, numerical_num, task_num, expert_num, embed_dim).to(device)
+    print(model)
     criterion = torch.nn.BCELoss()
     optimizer = torch.optim.Adam(params=model.parameters(), lr=learning_rate, weight_decay=weight_decay)
     
@@ -204,7 +207,7 @@ if __name__ == '__main__':
     parser.add_argument('--model_name', default='ple', choices=['singletask', 'sharedbottom', 'omoe', 'mmoe', 'ple', 'aitm', 'metaheac'])
     parser.add_argument('--epoch', type=int, default=1)
     parser.add_argument('--task_num', type=int, default=2)
-    parser.add_argument('--expert_num', type=int, default=8)
+    parser.add_argument('--expert_num', type=int, default=4)
     parser.add_argument('--learning_rate', type=float, default=0.001)
     parser.add_argument('--batch_size', type=int, default=1024)
     parser.add_argument('--embed_dim', type=int, default=128)
