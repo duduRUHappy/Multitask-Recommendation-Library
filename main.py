@@ -155,6 +155,8 @@ def main(dataset_name,
     # device = torch.device(device)
     device = torch.device(device if torch.cuda.is_available() else "cpu")
     train_dataset = get_dataset(dataset_name, os.path.join(dataset_path, dataset_name) + '/train_10000.csv')
+    print("check the type of train_dataset:")
+    print(type(train_dataset))
     test_dataset = get_dataset(dataset_name, os.path.join(dataset_path, dataset_name) + '/test_10000.csv')
     train_data_loader = DataLoader(train_dataset, batch_size=batch_size, num_workers=4, shuffle=True)
     test_data_loader = DataLoader(test_dataset, batch_size=batch_size, num_workers=4, shuffle=False)
